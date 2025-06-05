@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
+import csv
 
 # Creation du document qui scrape un seul livre
 
@@ -40,6 +41,7 @@ print('------------------------------------')
 
 product_page_book_name = doc_product_page.find('h1').string
 print(f"Le titre du livre: {product_page_book_name}" )
+product_page_book_name = str(product_page_book_name) # conversion de la navigable str en str
 
 print('------------------------------------')
 
@@ -66,7 +68,7 @@ print('------------------------------------')
 number_available_product_page = None
 quantite_livres_parenthese = liste_info_product_page[5].split() # On retrouve l'info dans la liste grace à l'index que l'on sépare mot à mot
 quantite_livres = quantite_livres_parenthese[2].replace("(",'') # On remplace la parenthèse par du vide pour isoler le nombre
-number_available_product_page = int(quantite_livres)
+number_available_product_page = quantite_livres
 
 print(f"Il reste {number_available_product_page} exemplaires")
 
@@ -76,6 +78,7 @@ print('------------------------------------')
 
 product_page_description = doc_product_page.find_all("p")[3].string
 print(f"La description du livre: {product_page_description}")
+product_page_description = str(product_page_description) # conversion de la navigable str en str
 
 print('------------------------------------')
 
@@ -83,6 +86,7 @@ print('------------------------------------')
 
 category_product_page = doc_product_page.find_all('a')[3].string
 print(f"La catégorie du livre: {category_product_page}")
+category_product_page = str(category_product_page) # conversion de la navigable str en str
 
 print('------------------------------------')
 
@@ -153,3 +157,24 @@ print(image_url_product_page) # A VOIR SI SUFFISANT
 
 
 # Ecrire les données dans un fichier csv
+
+en_tete = ['product_page_url','universal_product_code','title','price_including_tax','price_excluding_tax','number_available','product_description','category','review_rating','image_url']
+
+with open('data.csv','w') as csv_file:
+    writer = csv.writer(csv_file,delimiter=',') 
+    writer.writerow(en_tete)
+    for product_page_url,universal_product_code,title,price_including_tax,price_excluding_tax,number_available,product_description,category,review_rating,image_url in zip(url_product_page, upc_product_page,product_page_book_name,prix_taxe_incluse_product_page,prix_taxe_excluse_product_page,number_available_product_page,product_page_description,category_product_page,isolated_review_product_page_fr,image_url_product_page):
+
+        writer.writerow([product_page_url,universal_product_code,title,price_including_tax,price_excluding_tax,number_available,product_description,category,review_rating,image_url])
+
+# print(type(url_product_page))
+# print(type(upc_product_page))
+# print(type(product_page_book_name))
+# print(type(prix_taxe_incluse_product_page))
+# print(type(prix_taxe_excluse_product_page))
+# print(type(number_available_product_page))
+# print(type(product_page_description))
+# print(type(category_product_page))
+# print(type(image_url_product_page))
+
+
