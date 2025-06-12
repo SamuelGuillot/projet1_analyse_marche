@@ -3,7 +3,8 @@ import requests
 import csv
 import re
 from urllib.parse import urljoin
-# import urllib.request  # Puis-je seulement faire urllib import
+import urllib.request  # Puis-je seulement faire urllib import
+import os
 
 # PHASE 1
 
@@ -183,6 +184,14 @@ fieldnames_pp = [
     'image_url'
 ] # Création des entêtes pour les fichiers csv
 
+# Création de la fonction pour télécharger les images
+
+def download_image(url_image, relative_folder, file_name):  
+    final_file_name = file_name + ".jpg"
+    full_path = os.path.join(relative_folder, final_file_name) # os.path permet de manipuler les chemins (ici joindre)
+    urllib.request.urlretrieve(url_image, full_path) # Télécharge un document vers un fichier local
+
+
 # Récupération des liens des catégories de livres
 
 
@@ -205,10 +214,11 @@ for li in all_li[1:]: # On saute le premier résultat qui est "Books"
 url_category_base = "http://books.toscrape.com/catalogue/category/books/"
 url_category_list = []
 
+
+
+category_file_for_naming =[] # Liste pour le naming du fichier
+
 # Dans l'url des catégories les liens ont un numéro d'index +2 que l'on ajoute au lien
-
-category_file_for_naming =[]
-
 
 index = 2
 for category in category_list:
@@ -218,20 +228,15 @@ for category in category_list:
     url_category_list.append(url_category)
     index += 1
 
+# Pour sinultanément les liens des catégories ainsi que les noms de fichiers
 
 for url_category, name_for_file in zip (url_category_list, category_file_for_naming):
 
-    with open(f'{name_for_file}.csv', "w", newline ='', encoding='utf-8') as csvfile: 
+    with open(f'{name_for_file}.csv', "w", newline ='', encoding='utf-8') as csvfile: # Ouverte/ Création de fichier csv
         writer = csv.DictWriter(csvfile, delimiter= ',', fieldnames= fieldnames_pp)
-        writer.writeheader()
-    # for x in range(len(category_file_for_naming)):
-    #     name_for_file = category_file_for_naming[x-1]
-
-
-
-
-
-
+        writer.writeheader() # writes the header row
+  
+  
         # Pour chaque lien de première page de catégorie on cherche le nombre de livres afin de savoir combien de pages chaque catégorie a
         url_request_categorie_page = requests.get(url_category)
         url_request_categorie_page.encoding = "utf-8" # Je m'assure de l'encodage
@@ -320,18 +325,18 @@ for url_category, name_for_file in zip (url_category_list, category_file_for_nam
 
 
             for url in url_individual_books_list:         
-                print('================NOUVELLE_RECHERCHE_LIVRE=======')
+                print('========NOUVELLE_RECHERCHE_LIVRE=======')
                 url_request_product_page = requests.get(url)
                 url_request_product_page.encoding = "utf-8" # Je m'assure de l'encodage pour les éléments comme €
 
-                doc_product_page = BeautifulSoup(url_request_product_page.text, 'html.parser')
+                doc_product_page = BeautifulSoup(url_request_product_page.text, 'html.parser') # Création d'un document par livre
 
-
+                # Titre du livre
 
                 product_page_book_name = doc_product_page.find('h1').string
                 print(f"Le titre du livre: {product_page_book_name}" )
                 product_page_book_name = str(product_page_book_name) # conversion de la navigable str en str
-                # book_name_und = product_page_book_name.replace(' ','-')
+                book_name_und = product_page_book_name.replace(' ','-')
                 # print(book_name_und)
                 
                 # Universal_product_code (upc)
@@ -363,7 +368,7 @@ for url_category, name_for_file in zip (url_category_list, category_file_for_nam
 
                 livre_quantite_tag = doc_product_page.find('th', string="Availability")
                 livre_quantite_string = livre_quantite_tag.find_next('td').string
-                livre_quantite_list = re.findall(r'\d+', livre_quantite_string) 
+                livre_quantite_list = re.findall(r'\d+', livre_quantite_string) # Regex qui récupère seuelement les digits
                 livre_quantite = livre_quantite_list[0]
                 print(f"Il reste {livre_quantite} exemplaires" )
 
@@ -377,7 +382,7 @@ for url_category, name_for_file in zip (url_category_list, category_file_for_nam
                     print(f"La description du livre: {product_page_description}")
                     product_page_description = str(product_page_description) # 
                 else:
-                    product_page_description = "La descritpion de ce produit n'a pas pu être trouvée"
+                    product_page_description = "La descritpion de ce produit n'a pas pu être trouvée" # Occurence pour un livre
                 print('------------------------------------')
 
                 # Catégorie du livre
@@ -422,7 +427,17 @@ for url_category, name_for_file in zip (url_category_list, category_file_for_nam
 
                 # Téléchargement de l'image 
 
-                
+                # Pour la fonction de téléchargement j'ai besoin de imageurl, file_path, file_name
+
+                url_image = url_image_product_page
+                file_name = book_name_und
+                file_name = re.sub("[\W]","-", file_name) # On substitue tous les caractères spéciaux pour l'ecriture de chemin avec la Regex \W
+                folder_name = 'Images'
+                print(url_image)
+                print(folder_name)
+                print(file_name)
+                download_image(url_image, folder_name, file_name)
+
 
                 Book_dictionnary = ({
                     'Product_page_url' : url,
@@ -439,14 +454,7 @@ for url_category, name_for_file in zip (url_category_list, category_file_for_nam
                 
                 print(Book_dictionnary)
 
-                # # On extrait la catégorie du livre pour la comparer à la liste
-
-                # current_category = category_product_page
-                # current_category = current_category.replace(' ','-')
-                # current_category = current_category.lower()
-
-                # if current_category 
-
+                print('------------------------------------')
 
                 writer.writerow(Book_dictionnary)
 
