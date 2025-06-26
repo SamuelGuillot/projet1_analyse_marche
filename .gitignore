@@ -1,0 +1,9 @@
+*.csv
+
+Images/
+
+requirements.txt
+
+Lettre_Sam.docx
+
+__pycache__/
